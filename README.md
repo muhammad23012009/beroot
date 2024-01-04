@@ -16,7 +16,8 @@ beroot is an extremely simple and barebones setuid-root helper. It may have lots
 ## Installation
 
 ```shell
-autoreconf && ./configure && make && sudo make install
+make && sudo make install
 ```
 
 will automatically build and install beroot into `/usr/bin`.
+If you wish to choose a separate prefix, pass DESTDIR into `make install` with absolute path to your directory.
