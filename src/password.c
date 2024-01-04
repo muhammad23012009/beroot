@@ -33,7 +33,7 @@ char* get_password(void) {
         break;
     }
 
-    if (!password) {
+    if (!password || strlen(password) == 1) {
         fprintf(stderr, "beroot: failed to get password\n");
         tcsetattr(STDIN_FILENO, TCSANOW, &old_settings);
         return NULL;
