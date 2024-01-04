@@ -51,16 +51,14 @@ int check_permitted(void)
     struct passwd* pw_entry = getpwuid(uid);
     if (!pw_entry) {
         errx(1, "user ID %d doesn't exist", uid);
-        return 1;
     }
 
     printf("Enter password for %s: ", pw_entry->pw_name);
     char* password = get_password();
 
     if (!password) {
-        errx(1, "invalid password");
         free(password);
-        return 1;
+        errx(1, "invalid password");
     }
 
     if (strcmp(pw_entry->pw_passwd, "x")) {
@@ -68,8 +66,7 @@ int check_permitted(void)
     } else { // Password is in shadow file
         struct spwd* shadow_entry = getspnam(pw_entry->pw_name);
         if (!shadow_entry) {
-            fprintf(stderr, "failed to read shadow entry for user %s\n", pw_entry->pw_name);
-            return 1;
+            errx(1, "failed to read shadow entry for user %s\n", pw_entry->pw_name);
         }
 
         return strcmp(shadow_entry->sp_pwdp, crypt(password, shadow_entry->sp_pwdp));
