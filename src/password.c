@@ -21,20 +21,22 @@
 char* get_password(void) {
     struct termios old_settings, new_settings;
     char* password = NULL;
-    size_t len, read;
+    size_t len;
 
     tcgetattr(STDIN_FILENO, &old_settings);
     new_settings = old_settings;
     new_settings.c_lflag &= ~(ICANON | ECHO);
     tcsetattr(STDIN_FILENO, TCSANOW, &new_settings);
 
-    while (read = getline(&password, &len, stdin)) {
+    while (getline(&password, &len, stdin)) {
         printf("\n");
         break;
     }
 
-    if (!read) {
-        errx(1, "failed to get password, exiting.\n");
+    if (!password) {
+        fprintf(stderr, "beroot: failed to get password\n");
+        tcsetattr(STDIN_FILENO, TCSANOW, &old_settings);
+        return NULL;
     }
 
     // NULL-terminate the password ourselves.
