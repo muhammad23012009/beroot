@@ -18,6 +18,12 @@
 
 #include "beroot.h"
 
+static void usage(void)
+{
+    fprintf(stderr, "usage: beroot <command> [args]\n");
+    exit(1);
+}
+
 int main(int argc, char **argv)
 {
     const char* cmd = argv[1];
@@ -25,6 +31,11 @@ int main(int argc, char **argv)
     uid_t real_uid;
     uid_t target_uid = 0;
     int i;
+
+    // Check if we have any arguments
+    if (argc < 2) {
+        usage();
+    }
 
     // Get current user ID so we can revert back to it.
     real_uid = getuid();
@@ -38,10 +49,10 @@ int main(int argc, char **argv)
     }
 
     // Prepare arguments to pass to execvp()
-    arguments[LINE_MAX-1] = '\0';
     for (i = 1; i < argc; i++) {
         arguments[i-1] = argv[i];
     }
+    arguments[LINE_MAX-1] = '\0';
 
     // Now switch to UID 0 and do root stuff.
     setuid(target_uid);
