@@ -1,0 +1,77 @@
+/*
+*   beroot: an extremely barebones setuid-root helper.
+*   Copyright (C) 2023  Muhammad <muhammad23012009@hotmail.com>
+*
+*   This program is free software: you can redistribute it and/or modify
+*   it under the terms of the GNU General Public License as published by
+*   the Free Software Foundation, either version 3 of the License, or
+*   (at your option) any later version.
+*
+*   This program is distributed in the hope that it will be useful,
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*   GNU General Public License for more details.
+*
+*   You should have received a copy of the GNU General Public License
+*   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+#include "beroot.h"
+
+char* get_password(void) {
+    struct termios old_settings, new_settings;
+    char* password = NULL;
+    size_t len, read;
+
+    tcgetattr(STDIN_FILENO, &old_settings);
+    new_settings = old_settings;
+    new_settings.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &new_settings);
+
+    while (read = getline(&password, &len, stdin)) {
+        printf("\n");
+        break;
+    }
+
+    if (!read) {
+        errx(1, "failed to get password, exiting.\n");
+    }
+
+    // NULL-terminate the password ourselves.
+    password[strlen(password)-1] = '\0';
+
+    tcsetattr(STDIN_FILENO, TCSANOW, &old_settings);
+
+    return password;
+}
+
+int check_permitted(void)
+{
+    uid_t uid = getuid();
+    struct passwd* pw_entry = getpwuid(uid);
+    if (!pw_entry) {
+        errx(1, "user ID %d doesn't exist", uid);
+        return 1;
+    }
+
+    printf("Enter password for %s: ", pw_entry->pw_name);
+    char* password = get_password();
+
+    if (!password) {
+        errx(1, "invalid password");
+        free(password);
+        return 1;
+    }
+
+    if (strcmp(pw_entry->pw_passwd, "x")) {
+        return strcmp(pw_entry->pw_passwd, crypt(password, pw_entry->pw_passwd));
+    } else { // Password is in shadow file
+        struct spwd* shadow_entry = getspnam(pw_entry->pw_name);
+        if (!shadow_entry) {
+            fprintf(stderr, "failed to read shadow entry for user %s\n", pw_entry->pw_name);
+            return 1;
+        }
+
+        return strcmp(shadow_entry->sp_pwdp, crypt(password, shadow_entry->sp_pwdp));
+    }
+}
