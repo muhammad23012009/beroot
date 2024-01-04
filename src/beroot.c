@@ -60,6 +60,9 @@ int main(int argc, char **argv)
     // It's go time!
     execvp(cmd, arguments);
 
+    // If we've failed, may as well clean up.
+    setuid(real_uid);
+    seteuid(real_uid);
+
     err(errno, NULL);
-    return errno;
 }
