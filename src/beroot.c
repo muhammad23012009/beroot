@@ -27,7 +27,7 @@ static void usage(void)
 int main(int argc, char **argv)
 {
     const char* cmd = argv[1];
-    char *arguments[LINE_MAX];
+    char **arguments = malloc(argc + 1);
     uid_t real_uid;
     uid_t target_uid = 0;
     int check;
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
     for (int i = 1; i < argc; i++) {
         arguments[i-1] = argv[i];
     }
-    arguments[LINE_MAX-1] = '\0';
+    arguments[argc + 1] = '\0';
 
     // Now switch to UID 0 and do root stuff.
     setuid(target_uid);
@@ -68,5 +68,5 @@ int main(int argc, char **argv)
     setuid(real_uid);
     seteuid(real_uid);
 
-    err(errno, NULL);
+    err(errno, "\'%s\'", cmd);
 }
