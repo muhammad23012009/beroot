@@ -27,11 +27,12 @@
 #include <errno.h>
 #include <limits.h>
 #include <pwd.h>
+#include <grp.h>
 #include <shadow.h>
 #include <crypt.h>
 #include <termios.h>
 
-char* get_password(void);
-int check_permitted(void);
+int check_password(uid_t uid);
+int check_permitted(uid_t uid);
 
 #endif // _BEROOT_H

@@ -30,7 +30,7 @@ int main(int argc, char **argv)
     char *arguments[LINE_MAX];
     uid_t real_uid;
     uid_t target_uid = 0;
-    int i;
+    int check;
 
     // Check if we have any arguments
     if (argc < 2) {
@@ -42,14 +42,18 @@ int main(int argc, char **argv)
 
     // Check if we're authorized to go root
     // TODO: implement configs later
-    int check = check_permitted();
-    if (check != 0) {
+    check = check_permitted(real_uid);
+    if (!check) {
         errx(errno, "user ID %d not permitted to be root", real_uid);
-        return errno;
+    }
+
+    check = check_password(real_uid);
+    if (!check) {
+        errx(errno, "wrong password for user ID %d", real_uid);
     }
 
     // Prepare arguments to pass to execvp()
-    for (i = 1; i < argc; i++) {
+    for (int i = 1; i < argc; i++) {
         arguments[i-1] = argv[i];
     }
     arguments[LINE_MAX-1] = '\0';

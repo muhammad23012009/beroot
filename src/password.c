@@ -18,7 +18,7 @@
 
 #include "beroot.h"
 
-char* get_password(void) {
+static char* get_password(void) {
     struct termios old_settings, new_settings;
     char* password = NULL;
     size_t len;
@@ -47,9 +47,8 @@ char* get_password(void) {
     return password;
 }
 
-int check_permitted(void)
+int check_password(uid_t uid)
 {
-    uid_t uid = getuid();
     struct passwd* pw_entry = getpwuid(uid);
     if (!pw_entry) {
         errx(1, "user ID %d doesn't exist", uid);
@@ -64,13 +63,13 @@ int check_permitted(void)
     }
 
     if (strcmp(pw_entry->pw_passwd, "x")) {
-        return strcmp(pw_entry->pw_passwd, crypt(password, pw_entry->pw_passwd));
+        return strcmp(pw_entry->pw_passwd, crypt(password, pw_entry->pw_passwd)) == 0 ? 1 : 0;
     } else { // Password is in shadow file
         struct spwd* shadow_entry = getspnam(pw_entry->pw_name);
         if (!shadow_entry) {
             errx(1, "failed to read shadow entry for user %s\n", pw_entry->pw_name);
         }
 
-        return strcmp(shadow_entry->sp_pwdp, crypt(password, shadow_entry->sp_pwdp));
+        return strcmp(shadow_entry->sp_pwdp, crypt(password, shadow_entry->sp_pwdp)) == 0 ? 1 : 0;
     }
 }
